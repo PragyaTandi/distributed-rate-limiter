@@ -37,4 +37,12 @@ redis.call("HSET", key,
     "last_refill", current_time
 )
 
+if refill_rate > 0 then
+    local ttl = math.ceil(capacity / refill_rate) + 1
+
+    if ttl > 0 then
+        redis.call("EXPIRE", key, ttl)
+    end
+end
+
 return {allowed, tokens, retry_after}
