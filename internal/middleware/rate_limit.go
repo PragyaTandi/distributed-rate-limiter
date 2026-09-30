@@ -10,7 +10,7 @@ func RateLimit(l limiter.RateLimiter, next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		key := r.RemoteAddr
+		key := GetKey(r)
 
 		allowed, err := l.Allow(key)
 
@@ -23,9 +23,16 @@ func RateLimit(l limiter.RateLimiter, next http.Handler) http.Handler {
 
 		if !allowed {
 
-			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+
+			w.Write([]byte(`{
+            	"error": "rate limit exceeded",
+            	"message": "too many requests"
+                 }`))
 
 			return
+
 		}
 
 		next.ServeHTTP(w, r)
