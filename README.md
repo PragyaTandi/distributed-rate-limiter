@@ -1,45 +1,19 @@
 # Distributed Rate Limiter
 
-A distributed rate limiter built in Go using the Token Bucket algorithm.
+A distributed rate limiter built using Go.  
+The project implements the Token Bucket algorithm with HTTP middleware support.
 
 ## Features
 
-- Token Bucket rate limiting
-- HTTP middleware
-- In-memory implementation
-- Thread-safe using sync.Mutex
-- HTTP 429 responses
+- Token Bucket algorithm
+- In-memory rate limiting
+- Thread-safe implementation
+- HTTP middleware integration
+- IP/API-key based rate limiting
+- HTTP 429 Too Many Requests response
+- Health check endpoint
 - Unit tests
 - Benchmark tests
+- Configurable rate limits
 
-## Project Structure
-
-```
-cmd/
-internal/
-tests/
-```
-
-## Run
-
-```bash
-go run cmd/server/main.go
-```
-
-Server:
-
-```
-http://localhost:8080
-```
-
-## Run Tests
-
-```bash
-go test ./...
-```
-
-## Run Benchmark
-
-```bash
-go test ./tests -bench=BenchmarkTokenBucket -run=^$ -count=1
-```
+## Architecture
