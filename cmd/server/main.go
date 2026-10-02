@@ -7,6 +7,7 @@ import (
 	"github.com/PragyaTandi/distributed-rate-limiter/internal/config"
 	"github.com/PragyaTandi/distributed-rate-limiter/internal/limiter"
 	"github.com/PragyaTandi/distributed-rate-limiter/internal/middleware"
+	"github.com/PragyaTandi/distributed-rate-limiter/internal/redis"
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +21,10 @@ func main() {
 
 	cfg := config.LoadConfig()
 
-	rl := limiter.NewMemoryRateLimiter(
+	redisClient := redis.NewClient()
+
+	rl := limiter.NewRedisRateLimiter(
+		redisClient,
 		cfg.Capacity,
 		cfg.RefillRate,
 	)
@@ -28,9 +32,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", homeHandler)
+	mux.HandleFunc("/health", healthHandler)
 
 	handler := middleware.RateLimit(rl, mux)
-	mux.HandleFunc("/health", healthHandler)
 
 	fmt.Println("Server running on http://localhost:8080")
 
