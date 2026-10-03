@@ -6,26 +6,31 @@ import (
 )
 
 type TokenBucket struct {
-	capacity   int
-	tokens     float64
-	refillRate float64
-	lastRefill time.Time
-	mutex      sync.Mutex
+	capacity       int
+	tokens         float64
+	refillRate     float64
+	lastRefillTime time.Time
+	mutex          sync.Mutex
 }
 
 func NewTokenBucket(capacity int, refillRate float64) *TokenBucket {
+
 	return &TokenBucket{
-		capacity:   capacity,
-		tokens:     float64(capacity),
-		refillRate: refillRate,
-		lastRefill: time.Now(),
+		capacity:       capacity,
+		tokens:         float64(capacity),
+		refillRate:     refillRate,
+		lastRefillTime: time.Now(),
 	}
 }
 
-func (tb *TokenBucket) refill() {
+func (tb *TokenBucket) Allow(key string) (bool, error) {
+
+	tb.mutex.Lock()
+	defer tb.mutex.Unlock()
+
 	now := time.Now()
 
-	elapsed := now.Sub(tb.lastRefill).Seconds()
+	elapsed := now.Sub(tb.lastRefillTime).Seconds()
 
 	tb.tokens += elapsed * tb.refillRate
 
@@ -33,19 +38,14 @@ func (tb *TokenBucket) refill() {
 		tb.tokens = float64(tb.capacity)
 	}
 
-	tb.lastRefill = now
-}
-
-func (tb *TokenBucket) Allow() bool {
-	tb.mutex.Lock()
-	defer tb.mutex.Unlock()
-
-	tb.refill()
+	tb.lastRefillTime = now
 
 	if tb.tokens >= 1 {
+
 		tb.tokens--
-		return true
+
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }

@@ -35,5 +35,5 @@ func (m *MemoryRateLimiter) Allow(key string) (bool, error) {
 
 	m.mutex.Unlock()
 
-	return bucket.Allow(), nil
+	return bucket.Allow(key)
 }
