@@ -4,37 +4,24 @@ import (
 	"net/http"
 
 	"github.com/PragyaTandi/distributed-rate-limiter/internal/limiter"
+	"github.com/PragyaTandi/distributed-rate-limiter/internal/metrics"
 )
 
-func RateLimit(l limiter.RateLimiter, next http.Handler) http.Handler {
-
+func RateLimit(rl limiter.RateLimiter, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Header.Get("X-API-Key")
+		if key == "" {
+			key = r.RemoteAddr
+		}
 
-		key := GetKey(r)
-
-		allowed, err := l.Allow(key)
-
-		if err != nil {
-
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-
+		allowed, err := rl.Allow(key)
+		if err != nil || !allowed {
+			metrics.BlockedRequests.Inc()
+			http.Error(w, "429 Too Many Requests", http.StatusTooManyRequests)
 			return
 		}
 
-		if !allowed {
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusTooManyRequests)
-
-			w.Write([]byte(`{
-            	"error": "rate limit exceeded",
-            	"message": "too many requests"
-                 }`))
-
-			return
-
-		}
-
+		metrics.AllowedRequests.Inc()
 		next.ServeHTTP(w, r)
 	})
 }
